@@ -107,6 +107,42 @@
       box-shadow: 0 0 0 3px rgba(53, 93, 67, 0.12);
     }
 
+    .toolbar {
+      margin-top: 26px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 38px 0 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      padding: 12px 16px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 650;
+    }
+
+    .tab[aria-selected="true"] {
+      border-bottom-color: var(--green);
+      color: var(--green-dark);
+    }
+
+    .tab:focus-visible {
+      outline: 3px solid rgba(53, 93, 67, 0.35);
+      outline-offset: 2px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -257,15 +293,20 @@
       <p class="intro">Explore os projetos desenvolvidos pelas equipes. Encontre o nome de um integrante e acesse o trabalho com um clique.</p>
     </header>
 
-    <section aria-labelledby="projects-heading">
-      <div class="toolbar">
-        <h2 class="section-title" id="projects-heading">Projetos da turma</h2>
-        <label>
-          <span hidden>Buscar aluno ou projeto</span>
-          <input class="search" id="project-search" type="search" placeholder="Buscar aluno ou projeto..." autocomplete="off">
-        </label>
-      </div>
+    <div class="tabs" role="tablist" aria-label="Turmas">
+      <button class="tab" id="tab-info-1a" type="button" role="tab" aria-selected="true" aria-controls="panel-info-1a">INFO 1A</button>
+      <button class="tab" id="tab-info-1b" type="button" role="tab" aria-selected="false" aria-controls="panel-info-1b" tabindex="-1">INFO 1B</button>
+    </div>
 
+    <div class="toolbar">
+      <h2 class="section-title" id="projects-heading">Projetos da turma</h2>
+      <label>
+        <span hidden>Buscar aluno ou projeto</span>
+        <input class="search" id="project-search" type="search" placeholder="Buscar aluno ou projeto..." autocomplete="off">
+      </label>
+    </div>
+
+    <section id="panel-info-1a" role="tabpanel" aria-labelledby="tab-info-1a">
       <div class="grid" id="project-grid">
         <a class="project" href="https://amanndahei96-hub.github.io/mitos-do-olimpo/" target="_blank" rel="noopener noreferrer">
           <div class="project-top"><span class="initials" aria-hidden="true">AH</span><span class="arrow" aria-hidden="true">↗</span></div>
@@ -320,7 +361,25 @@
           <h3 class="project-name">Vinicius Bolzan Coelho</h3><p class="project-title">Trabalho de Web</p>
         </a>
       </div>
-      <p class="result-count" id="result-count" aria-live="polite"></p>
+      <p class="result-count" aria-live="polite"></p>
+    </section>
+
+    <section id="panel-info-1b" role="tabpanel" aria-labelledby="tab-info-1b" hidden>
+      <div class="grid">
+        <a class="project" href="https://borgeszanettiarthur-rgb.github.io/FisicaWeb/index.html" target="_blank" rel="noopener noreferrer">
+          <div class="project-top"><span class="initials" aria-hidden="true">AB</span><span class="arrow" aria-hidden="true">↗</span></div>
+          <h3 class="project-name">Arthur Borges Zanetti</h3><p class="project-title">Física · FisicaWeb</p>
+        </a>
+        <a class="project" href="https://heriquerigo-hue.github.io/egito2/" target="_blank" rel="noopener noreferrer">
+          <div class="project-top"><span class="initials" aria-hidden="true">HR</span><span class="arrow" aria-hidden="true">↗</span></div>
+          <h3 class="project-name">Herique Rigo</h3><p class="project-title">Egito · com Taila Faccin Ebeling e Maísa Mengatto</p>
+        </a>
+        <a class="project" href="https://isabelahx2008-star.github.io/is/" target="_blank" rel="noopener noreferrer">
+          <div class="project-top"><span class="initials" aria-hidden="true">IB</span><span class="arrow" aria-hidden="true">↗</span></div>
+          <h3 class="project-name">Isabela Benetti</h3><p class="project-title">Projeto da equipe · com Emily Simplicio e Lavinia Bueno</p>
+        </a>
+      </div>
+      <p class="result-count" aria-live="polite"></p>
     </section>
 
     <footer>Mostra de projetos · Site Integrador</footer>
@@ -328,12 +387,15 @@
 
   <script>
     const searchInput = document.getElementById("project-search");
-    const projects = Array.from(document.querySelectorAll(".project"));
-    const resultCount = document.getElementById("result-count");
-    const projectGrid = document.getElementById("project-grid");
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
 
     function filterProjects() {
       const query = searchInput.value.trim().toLocaleLowerCase("pt-BR");
+      const activePanel = panels.find((panel) => !panel.hidden);
+      const projects = Array.from(activePanel.querySelectorAll(".project"));
+      const resultCount = activePanel.querySelector(".result-count");
+      const projectGrid = activePanel.querySelector(".grid");
       let visibleCount = 0;
 
       projects.forEach((project) => {
@@ -358,6 +420,22 @@
         ? `${visibleCount} ${visibleCount === 1 ? "projeto encontrado" : "projetos encontrados"}`
         : `${projects.length} projetos`;
     }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach((item) => {
+          const isSelected = item === tab;
+          item.setAttribute("aria-selected", String(isSelected));
+          item.tabIndex = isSelected ? 0 : -1;
+        });
+
+        panels.forEach((panel) => {
+          panel.hidden = panel.id !== tab.getAttribute("aria-controls");
+        });
+
+        filterProjects();
+      });
+    });
 
     searchInput.addEventListener("input", filterProjects);
     filterProjects();
